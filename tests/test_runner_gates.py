@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 
+from biorepro.errors import BioreproError
 from biorepro.runner import WorkerResult, podman_argv, run_fixture
 from tests.test_validate import VALID, _copy_valid, _rewrite_manifest
 
@@ -131,6 +132,14 @@ def test_podman_argv_refuses_root_and_network():
     with pytest.raises(BioreproError) as caught:
         podman_argv(spec)
     assert caught.value.category == "review_rejected"
+
+
+def test_output_directory_inside_the_fixture_is_rejected(tmp_path):
+    root = _copy_valid(tmp_path)
+    with pytest.raises(BioreproError) as caught:
+        run_fixture(root, root / "nested-output", launcher=FakeLauncher(None))
+    assert caught.value.category == "review_rejected"
+    assert caught.value.reason == "output_inside_fixture"
 
 
 def test_unpinned_image_does_not_create_a_worker(tmp_path):

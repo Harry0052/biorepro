@@ -8,7 +8,7 @@
 | P02 | PASS | 2026-11-23 |
 | P03 | PASS | 2026-11-23 |
 | P04 | PASS | 2026-11-23 |
-| P05 | pending | |
+| P05 | PASS | 2026-11-23 |
 | P06 | pending | |
 | P07 | pending | |
 
@@ -158,3 +158,36 @@
 - Podman warns that `/` is not a shared mount. The demo run still wrote the table.
 
 **Next phase:** P05
+
+## P05 — Verify correctness, security, and performance
+
+**Phase and status:** P05 PASS
+
+**Files changed:**
+
+- `docs/validation.md`
+- `tests/test_runner_gates.py` (output directory must stay outside the fixture)
+- `docs/grokbot-progress.md`
+
+**Commands and results:**
+
+- `python3 -m compileall -q biorepro tests` → ok.
+- `.venv/bin/pytest -q` → `37 passed` in 4.15 seconds.
+- Fresh demo `.venv/bin/biorepro demo --fixture fixtures/office-wellness --invalid fixtures/invalid-missing-column --output /tmp/fresh-demo` → exit 0, status `pass`, elapsed 0.35 seconds. Budget is 15 seconds.
+- Fixture tables and script total 2314 bytes.
+- OSV.dev query for pytest 9.2.0 returned zero vulnerabilities. No third-party Python runtime dependency.
+- Secret-pattern search of tracked files found no matches.
+- Host: Linux 6.12.113+ x86_64, CPython 3.12.3, Podman 4.9.3, R 4.3.3.
+
+**Artifact paths:**
+
+- `docs/validation.md`
+- `/tmp/fresh-demo/demo.json` (fresh-state demo, outside the git tree)
+
+**Open issues:**
+
+- Apt layer digests drift across rebuilds. Recipe labels are the fallback gate and are described in `docs/validation.md`.
+- The Ubuntu package set inside the worker image was not scanned against a CVE feed beyond the version pins.
+- Podman warns that `/` is not a shared mount. The fresh demo still passed.
+
+**Next phase:** P06
