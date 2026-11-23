@@ -9,7 +9,7 @@
 | P03 | PASS | 2026-11-23 |
 | P04 | PASS | 2026-11-23 |
 | P05 | PASS | 2026-11-23 |
-| P06 | pending | |
+| P06 | PASS | 2026-11-23 |
 | P07 | pending | |
 
 ## P01 — Research overlap and confirm the MVP
@@ -191,3 +191,35 @@
 - Podman warns that `/` is not a shared mount. The fresh demo still passed.
 
 **Next phase:** P06
+
+## P06 — Prepare a reproducible open-source release
+
+**Phase and status:** P06 PASS
+
+**Files changed:**
+
+- `README.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `SECURITY.md`, `.gitattributes`
+- `.github/workflows/ci.yml`
+- `docs/validation.md` (reference digest updated after LF normalization)
+- Text files normalized from CRLF to LF. Fixture SHA-256 values and the worker reference digest were recomputed.
+- `docs/grokbot-progress.md`
+
+**Commands and results:**
+
+- Line-ending normalization, then a worker rebuild. Reference digest `sha256:b2b0f3e7747a54ad426f7041c81decc7d82fe217ca335c19cf1def853f74cbd2`. Containerfile SHA-256 `652fdef7c4c1b2c016faf1fbead31b26319be5d054ea13a38f7aaddd117cd5a2`.
+- `.venv/bin/pytest -q` → `37 passed`. `biorepro demo` → exit 0, status `pass`.
+- Clean copy at `/tmp/biorepro-clean` followed the README: venv, `pip install -e ".[dev]"`, `scripts/build_worker.sh`, `compileall`, `pytest`, `biorepro demo`. The rebuild digest was `sha256:7b252c70df1e482ef26bc5c029b883844c7cac0d4f029a7f5c251a2813b989c1` and the script reported that the recipe labels match. pytest → `37 passed` in 5.34 seconds. Demo status `pass` (`/tmp/clean-room.log` is `CLEAN_OK`).
+- Workflow permissions are `contents: read` and `actions: write` (artifact upload). Actions are pinned to commit SHAs. The workflow does not use secrets.
+
+**Artifact paths:**
+
+- `/tmp/biorepro-clean/outputs/demo/demo.json`
+- `.github/workflows/ci.yml`
+- `SECURITY.md`
+
+**Open issues:**
+
+- Hosted CI has not run yet. P07 watches it.
+- Apt layer digests differ across rebuilds. The clean-room demo ran on a non-reference digest whose recipe labels matched.
+
+**Next phase:** P07

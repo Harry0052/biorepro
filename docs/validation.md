@@ -11,7 +11,7 @@ Recorded 2026-11-23 on the build host after P04. The checks use the synthetic `o
 | Podman | 4.9.3, rootless, graph driver overlay, runtime crun |
 | R in the worker image | 4.3.3, Ubuntu package `r-base-core` 4.3.3-2build2 |
 | pytest | 9.2.0 |
-| Worker reference digest | `sha256:3a396efd0e2bff36135e5d943a7510a9910d94358faa05871c37f793d8136cb9` |
+| Worker reference digest | `sha256:b2b0f3e7747a54ad426f7041c81decc7d82fe217ca335c19cf1def853f74cbd2` |
 | Base layer | `sha256:369ede38a92da8cd72a76f15f37e496def401830f3c8b7d39c0c7695682a51ce` |
 
 `python3 -m compileall -q biorepro tests` completed with status ok. The application imports only the Python standard library. pytest is a test dependency.
@@ -36,6 +36,8 @@ Observed fresh run:
 ```
 
 Exit 0, status `pass`, elapsed **0.35 seconds**. The budget passes.
+
+After the repository text was normalized to LF line endings, the fixture hashes and the worker image were rebuilt. `.venv/bin/pytest -q` again reported 37 passed, and `biorepro demo` again exited 0 with status `pass`. The reference digest above is that LF build.
 
 ## Acceptance evidence
 

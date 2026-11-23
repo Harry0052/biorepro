@@ -14,13 +14,13 @@
   "inputs": [
     {
       "path": "inputs/groups.csv",
-      "sha256": "7bef87394964dea2a8a8ea0c9d64faaa2cc361c0ee71b180469d79ccfe8de706",
+      "sha256": "db38d705dacc0a1bfab739abab7ab9e46517a78cdb23f3edfff63c48190df6a6",
       "role": "group_outcomes"
     }
   ],
   "entrypoint": {
     "path": "script/analyze.R",
-    "sha256": "c3a9753df51dea94e99064cada5b1c041134f724ebbbdcbf095939fe416686b8",
+    "sha256": "693986d5ea4baa07b15b4fd9e74e587a2391e17656a971131c959dd9ab8a3b91",
     "interpreter": "Rscript",
     "args": [
       "--vanilla"
@@ -29,28 +29,28 @@
   "oracles": [
     {
       "path": "oracle/expected.csv",
-      "sha256": "e703cd02648c8a59d0d9bfb10e3f9cd641a768e9426389de5a3ce213b5560045",
+      "sha256": "2da556063447ea1027c41b83557a6d0d6edd09aa2890c18483a2ede176f26c7a",
       "role": "clean"
     },
     {
       "path": "oracle/perturbed.csv",
-      "sha256": "9f8ca02f7e9f153d3c960f80a21cd99709c83f06b5d1ba06882fff95bb691458",
+      "sha256": "6320d72952d7c624498f20e5e2ad85fa09cd93ac981687472d1e2247f241d9a0",
       "role": "perturbed"
     }
   ],
   "notes": [
     {
       "path": "ORACLE.md",
-      "sha256": "18957c5db8257053850d2221212eef206ee53af15688dffe39cbbb1d57f5b5c4",
+      "sha256": "2a4290adc8b72b7b628d708edaeb2866b21ab9772655397c77b26f4fd92eea4f",
       "role": "calculation_note"
     }
   ],
   "image": {
     "name": "localhost/biorepro-office-wellness:0.1.0",
-    "digest": "sha256:3a396efd0e2bff36135e5d943a7510a9910d94358faa05871c37f793d8136cb9",
+    "digest": "sha256:b2b0f3e7747a54ad426f7041c81decc7d82fe217ca335c19cf1def853f74cbd2",
     "base_digest": "sha256:9c7f200c07e3d4a03e7249d2c16bf66a51120fb876aa2242cf31451412543289",
     "base_layer": "sha256:369ede38a92da8cd72a76f15f37e496def401830f3c8b7d39c0c7695682a51ce",
-    "containerfile_sha256": "4fc53668f1cc8ab3d26ca156efdb29534f95f8740e07281eae1ed2a3c2f35fe4",
+    "containerfile_sha256": "652fdef7c4c1b2c016faf1fbead31b26319be5d054ea13a38f7aaddd117cd5a2",
     "built_from": "deploy/Containerfile",
     "r_version": "4.3.3"
   },

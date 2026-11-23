@@ -4,88 +4,88 @@ Local harness for one synthetic aggregate statistical table. A reviewer checks t
 
 Numerical agreement is outcome agreement under the recorded tolerances. It is not a clinical validation.
 
-The bundled counts are original synthetic group totals for a workplace step-program methods example. There is no DOI, no personal data, and no upstream dataset. Fixture data and code are released under the MIT license in `LICENSE`.
+There is no separate hardware, GPU, or real-patient demo. The only supported demo is the synthetic office-wellness fixture in this repository.
 
-## Prerequisites
+## Supported platform
 
-- Python 3.11 or newer. Development used CPython 3.12.3.
-- For tests: pytest 9.2.0, pinned in `requirements-dev.txt`.
-- Rootless Podman 4.9 for the rerun. The worker image is built locally from `deploy/Containerfile` and is not downloaded at analysis time.
-- R 4.3.3 is installed inside that image from Ubuntu `r-base-core` (GPL). R is not vendored in this MIT tree. `validate` and `compare` do not need R or Podman.
+- Linux x86_64. Development and the commands below were run on Ubuntu 24.04 with CPython 3.12.3.
+- Python 3.11 or newer for `validate` and `compare`.
+- Rootless Podman 4.9 or newer for `run` and `demo`. Podman 4.9.3 was used here.
+- The worker image is built on the machine from `deploy/Containerfile`. Analysis runs do not use the network.
 
-## Install and test
+R 4.3.3 enters the image from Ubuntu `r-base-core` (GPL) at build time. R is not vendored in this MIT tree. pytest 9.2.0 (MIT) is a test-only dependency, pinned in `requirements-dev.txt` and `pyproject.toml`.
+
+## Install
 
 From a clean checkout:
 
 ```bash
 python3 -m venv .venv
 .venv/bin/pip install -e ".[dev]"
+scripts/build_worker.sh
+.venv/bin/python -m compileall -q biorepro tests
 .venv/bin/pytest
 ```
 
-## Validate a fixture
-
-Accept the synthetic office-wellness fixture:
-
-```bash
-.venv/bin/biorepro validate fixtures/office-wellness
-```
-
-Exit code `0`. Standard output is one JSON object. The human line is on standard error.
-
-Reject the labeled invalid fixture. `inputs/groups.csv` omits `n_people`:
-
-```bash
-.venv/bin/biorepro validate fixtures/invalid-missing-column
-```
-
-Exit code `4` (`schema_mismatch`). The JSON `message` names the missing column.
-
-`biorepro --help` lists the commands. `biorepro --version` prints the version.
+`scripts/build_worker.sh` prints the built digest and the reference digest. Apt's installed layer is not bit-stable, so those digests may differ. The script exits 0 when the base layer, the base-digest label, and the Containerfile hash label match `fixtures/office-wellness/manifest.json`. Any other image is refused before a worker is created.
 
 ## Demo
 
-Build the worker once, then run the demo. The demo validates the sample, reruns it, compares the perturbed oracle, and rejects the fixture that omits `n_people`.
-
 ```bash
-scripts/build_worker.sh
 .venv/bin/biorepro demo --output outputs/demo
 ```
 
-Exit code `0` means all three of these are true:
+Expected result: exit code `0` and `outputs/demo/demo.json` with `"status": "pass"`.
 
-- the clean rerun matches `oracle/expected.csv`
-- the perturbed oracle reports only `walk_challenge` / `mean_steps`
+That means all three of these happened:
+
+- the clean rerun matches `fixtures/office-wellness/oracle/expected.csv`
+- the perturbed oracle reports only endpoint `walk_challenge`, column `mean_steps` (6540.00 versus 6540.25, absolute tolerance 0.01)
 - `fixtures/invalid-missing-column` is rejected and no worker is created
 
-Read `outputs/demo/demo.md`, then `outputs/demo/clean/evidence.md` and `outputs/demo/perturbed-comparison.md`. The clean table is `outputs/demo/clean/endpoints.csv`.
+Read these reports:
 
-## Build the worker and rerun one oracle
+- `outputs/demo/demo.md`
+- `outputs/demo/clean/evidence.md` and `outputs/demo/clean/evidence.json`
+- `outputs/demo/clean/endpoints.csv`
+- `outputs/demo/perturbed-comparison.md`
+
+## Other commands
+
+JSON is written to stdout. A one-line status is written to stderr.
 
 ```bash
-scripts/build_worker.sh
+.venv/bin/biorepro --help
+.venv/bin/biorepro validate fixtures/office-wellness
+.venv/bin/biorepro validate fixtures/invalid-missing-column
 .venv/bin/biorepro run fixtures/office-wellness --output outputs/office-wellness
-```
-
-Exit code `0` means the recomputed table matches `oracle/expected.csv` within absolute tolerance `0.01`. The table is `outputs/office-wellness/endpoints.csv`. The evidence packet is `outputs/office-wellness/evidence.json` and `evidence.md`.
-
-Compare that table with the perturbed oracle, which moves `walk_challenge` / `mean_steps` by `+0.25`:
-
-```bash
-.venv/bin/biorepro run fixtures/office-wellness --oracle perturbed --output outputs/office-wellness-perturbed
 .venv/bin/biorepro compare outputs/office-wellness/endpoints.csv \
   fixtures/office-wellness/oracle/perturbed.csv \
   --manifest fixtures/office-wellness/manifest.json
 ```
 
-Exit code `1` (`numeric_disagreement`). The report names endpoint `walk_challenge` and column `mean_steps`. `compare` does not start a worker.
+`validate` on the office-wellness fixture exits 0. `validate` on the missing-column fixture exits 4 (`schema_mismatch`) and names `n_people`. `run` against the clean oracle exits 0. `compare` against the perturbed oracle exits 1 (`numeric_disagreement`) and does not start a worker.
 
-The manifest records a reference image digest from a vetted build. Apt's installed layer is not bit-stable across rebuilds, so a later `scripts/build_worker.sh` may print a different digest. A run is still allowed when the image's base layer, base digest label, and Containerfile hash label match the manifest. Any other image is refused before a worker is created. The evidence packet records whether the reference digest matched.
+## Fixture and data terms
 
-## Fixture contract
+`fixtures/office-wellness` is an original synthetic methods example: six workplace groups and a pooled mean of daily steps, in steps per person per day. Generation seed `20261123`. RNG seed is null because the estimand does not use randomness. DOI is null because this is not a published dataset. There are no personal data and no patient records.
 
-`fixtures/office-wellness/manifest.json` records the fixture id, a null DOI, input and script SHA-256 hashes, the R entry point allowlist, a null image digest until the worker image is built, generation seed `20261123`, a null RNG seed, the pooled-mean estimand, the output columns, the primary key `endpoint_id`, and the `mean_steps` tolerance (absolute `0.01`, relative `0`).
+The hand calculation is `fixtures/office-wellness/ORACLE.md`. The manifest records input and script SHA-256 hashes, the R entry point, the reference image digest, the base image digest, the Containerfile hash, the output columns, the primary key `endpoint_id`, and the `mean_steps` tolerance (absolute `0.01`, relative `0`).
 
-The hand calculation is in `fixtures/office-wellness/ORACLE.md`. The clean table is `oracle/expected.csv`. `oracle/perturbed.csv` changes `walk_challenge` / `mean_steps` by `+0.25`.
+Fixture data and code are released under the MIT license in `LICENSE`. Do not add patient-level records, credentials, or third-party extracts without recording the DOI, the access conditions, and the redistribution rights separately.
 
-Validation refuses symlinks, paths that leave the fixture directory, undeclared files, hash mismatches, root execution, writable-input policy, and any network setting other than `none`. Those refusals happen before a worker exists. Changed hashes use category `review_rejected`.
+## Notices
+
+- Code and the synthetic fixture: MIT, `LICENSE`.
+- Worker base image: `docker.io/library/ubuntu` digest `sha256:9c7f200c07e3d4a03e7249d2c16bf66a51120fb876aa2242cf31451412543289`, under Ubuntu's terms. It is pulled when the image is built and is not stored in git.
+- R inside that image: GPL, package `r-base-core=4.3.3-2build2`. Source is provided by Ubuntu. It is not copied into this repository.
+- pytest: MIT, test-only.
+
+## Project documents
+
+- `CHANGELOG.md` — version history
+- `CONTRIBUTING.md` — how to test a change
+- `SECURITY.md` — how to report a vulnerability
+- `docs/validation.md` — acceptance evidence, timing, and residual limits
+- `docs/project-contract.md` — the user task and the acceptance case
+- `docs/overlap.md` — why this repository is separate from existing table-diff and replication tools
