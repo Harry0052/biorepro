@@ -46,9 +46,13 @@
     }
   ],
   "image": {
-    "name": "localhost/biorepro-office-wellness",
-    "digest": null,
-    "built_from": "deploy/Containerfile"
+    "name": "localhost/biorepro-office-wellness:0.1.0",
+    "digest": "sha256:3a396efd0e2bff36135e5d943a7510a9910d94358faa05871c37f793d8136cb9",
+    "base_digest": "sha256:9c7f200c07e3d4a03e7249d2c16bf66a51120fb876aa2242cf31451412543289",
+    "base_layer": "sha256:369ede38a92da8cd72a76f15f37e496def401830f3c8b7d39c0c7695682a51ce",
+    "containerfile_sha256": "4fc53668f1cc8ab3d26ca156efdb29534f95f8740e07281eae1ed2a3c2f35fe4",
+    "built_from": "deploy/Containerfile",
+    "r_version": "4.3.3"
   },
   "output_schema": {
     "columns": [

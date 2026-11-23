@@ -344,6 +344,19 @@ def _check_contract_fields(manifest: dict, checks: list[Check]) -> None:
             "malformed_input",
             "image.digest must be null or sha256: followed by 64 lowercase hex characters",
         )
+    for key in ("base_digest", "base_layer"):
+        value = image.get(key)
+        if not isinstance(value, str) or not value.startswith("sha256:") or _SHA256.fullmatch(value[7:]) is None:
+            raise BioreproError(
+                "malformed_input",
+                f"image.{key} must be sha256: followed by 64 lowercase hex characters",
+            )
+    recipe = image.get("containerfile_sha256")
+    if not isinstance(recipe, str) or _SHA256.fullmatch(recipe) is None:
+        raise BioreproError(
+            "malformed_input",
+            "image.containerfile_sha256 must be the 64-character SHA-256 of deploy/Containerfile",
+        )
     entry = manifest["entrypoint"]
     if entry.get("interpreter") != "Rscript" or entry.get("args") != ["--vanilla"]:
         raise BioreproError(

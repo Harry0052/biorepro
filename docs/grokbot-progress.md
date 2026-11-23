@@ -6,7 +6,7 @@
 | --- | --- | --- |
 | P01 | PASS | 2026-11-23 |
 | P02 | PASS | 2026-11-23 |
-| P03 | pending | |
+| P03 | PASS | 2026-11-23 |
 | P04 | pending | |
 | P05 | pending | |
 | P06 | pending | |
@@ -86,3 +86,40 @@
 - `fuse-overlayfs` is unpacked and not configured. Podman is using the native overlay driver.
 
 **Next phase:** P03
+
+## P03 — Build the working core
+
+**Phase and status:** P03 PASS
+
+**Files changed:**
+
+- `biorepro/compare.py`, `biorepro/runner.py`, `biorepro/cli.py`, `biorepro/validate.py`
+- `deploy/Containerfile`
+- `scripts/build_worker.sh`
+- `fixtures/office-wellness/manifest.json` and `fixtures/invalid-missing-column/manifest.json` (image digest and recipe pins)
+- `tests/test_compare.py`, `tests/test_runner_gates.py`, `tests/test_run_worker.py`
+- `README.md`
+- `docs/grokbot-progress.md`
+
+**Commands and results:**
+
+- Worker image built with `podman build --timestamp 1795392000 --layers=false --build-arg CONTAINERFILE_SHA256=4fc53668f1cc8ab3d26ca156efdb29534f95f8740e07281eae1ed2a3c2f35fe4 -t localhost/biorepro-office-wellness:0.1.0 -f deploy/Containerfile deploy`. Reference digest `sha256:3a396efd0e2bff36135e5d943a7510a9910d94358faa05871c37f793d8136cb9`. Base layer `sha256:369ede38a92da8cd72a76f15f37e496def401830f3c8b7d39c0c7695682a51ce`. A second build of the same Containerfile produced a different apt-layer digest (`sha256:75c15f6a7eee5b3a4fc1ca33fcdc4bb27129e9643915d8fdba90d736068e0f69` before the label was added); config, history, and the Ubuntu base layer stayed the same.
+- `.venv/bin/pytest -q` → `35 passed` in 4.96s. That includes two clean isolated reruns, the perturbed-cell check, hash and network refusals before any worker, timeout, missing output, and the 32 MiB memory limit.
+- `.venv/bin/biorepro run fixtures/office-wellness --output outputs/office-wellness` → exit 0, category `match`, `reference_digest_match` true, worker created, network none.
+- `.venv/bin/biorepro run fixtures/office-wellness --oracle perturbed --output outputs/office-wellness-perturbed` → exit 1, category `numeric_disagreement`, the only cell is `walk_challenge` / `mean_steps` with absolute difference `0.25`.
+
+**Artifact paths:**
+
+- `outputs/office-wellness/endpoints.csv`
+- `outputs/office-wellness/evidence.json`
+- `outputs/office-wellness/evidence.md`
+- `outputs/office-wellness-perturbed/evidence.json`
+- `deploy/Containerfile`
+
+**Open issues:**
+
+- Apt layer digests change across rebuilds. The run gate accepts an image when the reference digest matches, or when the base layer, base digest label, and Containerfile hash label match. The evidence records `reference_digest_match`.
+- Podman still warns that `/` is not a shared mount. The isolated rerun completed and wrote the table.
+- `fuse-overlayfs` remains unconfigured. The native overlay driver was used.
+
+**Next phase:** P04

@@ -1,0 +1,21 @@
+# Worker image for the office-wellness rerun.
+# The base digest and the r-base-core version are pinned. Analysis runs do not
+# use the network; packages are installed only while this image is built.
+FROM docker.io/library/ubuntu@sha256:9c7f200c07e3d4a03e7249d2c16bf66a51120fb876aa2242cf31451412543289
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends r-base-core=4.3.3-2build2 \
+    && rm -rf /var/lib/apt/lists/*
+
+ARG CONTAINERFILE_SHA256=unreviewed
+LABEL org.biorepro.base_digest="sha256:9c7f200c07e3d4a03e7249d2c16bf66a51120fb876aa2242cf31451412543289" \
+      org.biorepro.base_layer="sha256:369ede38a92da8cd72a76f15f37e496def401830f3c8b7d39c0c7695682a51ce" \
+      org.biorepro.containerfile_sha256="${CONTAINERFILE_SHA256}" \
+      org.biorepro.r_version="4.3.3" \
+      org.biorepro.purpose="synthetic-aggregate-rerun"
+
+WORKDIR /work
