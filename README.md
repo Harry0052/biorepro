@@ -43,7 +43,24 @@ Exit code `4` (`schema_mismatch`). The JSON `message` names the missing column.
 
 `biorepro --help` lists the commands. `biorepro --version` prints the version.
 
-## Build the worker and rerun
+## Demo
+
+Build the worker once, then run the demo. The demo validates the sample, reruns it, compares the perturbed oracle, and rejects the fixture that omits `n_people`.
+
+```bash
+scripts/build_worker.sh
+.venv/bin/biorepro demo --output outputs/demo
+```
+
+Exit code `0` means all three of these are true:
+
+- the clean rerun matches `oracle/expected.csv`
+- the perturbed oracle reports only `walk_challenge` / `mean_steps`
+- `fixtures/invalid-missing-column` is rejected and no worker is created
+
+Read `outputs/demo/demo.md`, then `outputs/demo/clean/evidence.md` and `outputs/demo/perturbed-comparison.md`. The clean table is `outputs/demo/clean/endpoints.csv`.
+
+## Build the worker and rerun one oracle
 
 ```bash
 scripts/build_worker.sh

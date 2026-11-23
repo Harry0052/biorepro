@@ -56,6 +56,7 @@ class Comparison:
     message: str
     reason: str | None = None
     differences: list[CellDifference] = field(default_factory=list)
+    endpoints: list[dict] = field(default_factory=list)
     schema_ok: bool = False
 
     def to_dict(self) -> dict:
@@ -64,6 +65,7 @@ class Comparison:
             "reason": self.reason,
             "message": self.message,
             "schema_ok": self.schema_ok,
+            "endpoints": self.endpoints,
             "differences": [item.to_dict() for item in self.differences],
         }
 
@@ -148,7 +150,8 @@ def compare_tables(
             continue
         differences.extend(_compare_row(key, actual, expected, abs_tol=abs_tol, rel_tol=rel_tol))
 
-    return _summarize(differences, abs_tol=abs_tol, rel_tol=rel_tol)
+    endpoints = _endpoint_status(set(actual_by_key), set(expected_by_key), differences)
+    return _summarize(differences, endpoints, abs_tol=abs_tol, rel_tol=rel_tol)
 
 
 def _load_side(path: Path, *, max_bytes: int, max_rows: int, role: str) -> tuple[list[str], list[dict[str, str]]]:
@@ -298,7 +301,40 @@ def _optional_decimal(raw: str) -> Decimal | None:
     return parse_decimal(raw)
 
 
-def _summarize(differences: list[CellDifference], *, abs_tol: Decimal, rel_tol: Decimal) -> Comparison:
+def _endpoint_status(
+    actual_keys: set[str],
+    expected_keys: set[str],
+    differences: list[CellDifference],
+) -> list[dict]:
+    grouped: dict[str, list[CellDifference]] = {}
+    for item in differences:
+        grouped.setdefault(item.endpoint_id, []).append(item)
+    order = ("missing_endpoint", "extra_endpoint", "missing_value", "value_disagreement", "numeric_disagreement")
+    rows = []
+    for key in sorted(actual_keys | expected_keys):
+        items = grouped.get(key, [])
+        status = "match"
+        for kind in order:
+            if any(item.kind == kind for item in items):
+                status = kind
+                break
+        rows.append(
+            {
+                "endpoint_id": key,
+                "status": status,
+                "columns": [item.column for item in items],
+            }
+        )
+    return rows
+
+
+def _summarize(
+    differences: list[CellDifference],
+    endpoints: list[dict],
+    *,
+    abs_tol: Decimal,
+    rel_tol: Decimal,
+) -> Comparison:
     if not differences:
         return Comparison(
             category="match",
@@ -307,6 +343,7 @@ def _summarize(differences: list[CellDifference], *, abs_tol: Decimal, rel_tol: 
                 f"and relative tolerance {format(rel_tol, 'f')}"
             ),
             schema_ok=True,
+            endpoints=endpoints,
         )
     kinds = {item.kind for item in differences}
     if "missing_endpoint" in kinds or "extra_endpoint" in kinds:
@@ -323,4 +360,5 @@ def _summarize(differences: list[CellDifference], *, abs_tol: Decimal, rel_tol: 
         message=f"{len(differences)} cell difference(s): {named}",
         schema_ok=True,
         differences=differences,
+        endpoints=endpoints,
     )

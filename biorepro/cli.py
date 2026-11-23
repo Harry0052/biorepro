@@ -9,6 +9,7 @@ from pathlib import Path
 
 from biorepro import __version__
 from biorepro.compare import compare_files
+from biorepro.demo import run_demo
 from biorepro.errors import EXIT_CODE, BioreproError
 from biorepro.runner import exit_code_for, run_fixture
 from biorepro.validate import validate_fixture
@@ -35,6 +36,11 @@ def main(argv: list[str] | None = None) -> int:
         help="Which declared oracle to compare against (default: clean)",
     )
 
+    demo = sub.add_parser("demo", help="Validate, rerun, compare the perturbed oracle, and reject the invalid fixture")
+    demo.add_argument("--fixture", type=Path, default=Path("fixtures/office-wellness"))
+    demo.add_argument("--invalid", type=Path, default=Path("fixtures/invalid-missing-column"))
+    demo.add_argument("--output", type=Path, required=True, help="Directory for the demo packet")
+
     compare = sub.add_parser("compare", help="Compare two endpoint tables without starting a worker")
     compare.add_argument("actual", type=Path, help="Table produced by a rerun")
     compare.add_argument("expected", type=Path, help="Oracle table")
@@ -48,6 +54,8 @@ def main(argv: list[str] | None = None) -> int:
             return _run_command(args.fixture, args.output, args.oracle)
         if args.command == "compare":
             return _compare_command(args.actual, args.expected, args.manifest)
+        if args.command == "demo":
+            return _demo_command(args.fixture, args.output, args.invalid)
     except BioreproError as exc:
         _emit_error(exc.category, exc.reason, exc.message)
         return exc.exit_code
@@ -103,6 +111,14 @@ def _run_command(fixture: Path, output: Path, oracle: str) -> int:
     sys.stdout.write("\n")
     print(evidence.message, file=sys.stderr)
     return exit_code_for(evidence)
+
+
+def _demo_command(fixture: Path, output: Path, invalid: Path) -> int:
+    summary = run_demo(fixture, output, invalid if invalid.exists() else None)
+    json.dump(summary, sys.stdout, indent=2, sort_keys=True)
+    sys.stdout.write("\n")
+    print(f"demo {summary['status']}: {output}", file=sys.stderr)
+    return 0 if summary["status"] == "pass" else 1
 
 
 def _compare_command(actual: Path, expected: Path, manifest_path: Path) -> int:

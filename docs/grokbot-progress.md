@@ -7,7 +7,7 @@
 | P01 | PASS | 2026-11-23 |
 | P02 | PASS | 2026-11-23 |
 | P03 | PASS | 2026-11-23 |
-| P04 | pending | |
+| P04 | PASS | 2026-11-23 |
 | P05 | pending | |
 | P06 | pending | |
 | P07 | pending | |
@@ -123,3 +123,38 @@
 - `fuse-overlayfs` remains unconfigured. The native overlay driver was used.
 
 **Next phase:** P04
+
+## P04 — Ship the user workflow and reports
+
+**Phase and status:** P04 PASS
+
+**Files changed:**
+
+- `biorepro/demo.py`, `biorepro/cli.py`, `biorepro/compare.py`, `biorepro/runner.py`
+- `tests/test_compare.py`, `tests/test_run_worker.py`
+- `README.md`
+- `docs/grokbot-progress.md`
+
+**Commands and results:**
+
+- `.venv/bin/pytest -q` → `36 passed`.
+- `.venv/bin/biorepro demo --output outputs/demo` → exit 0, status `pass`. Clean category `match`. Perturbed category `numeric_disagreement` on `walk_challenge` / `mean_steps`. Invalid fixture category `schema_mismatch` with `worker_created` false.
+- `.venv/bin/biorepro run fixtures/invalid-missing-column --output outputs/invalid` → exit 4. Recovery text names `inputs/groups.csv` and says no worker is created.
+- `.venv/bin/biorepro --help` lists `validate`, `run`, `demo`, and `compare`. JSON is on stdout and the short status line is on stderr.
+
+**Artifact paths:**
+
+- `outputs/demo/demo.md`
+- `outputs/demo/demo.json`
+- `outputs/demo/clean/endpoints.csv`
+- `outputs/demo/clean/evidence.json`
+- `outputs/demo/clean/evidence.md`
+- `outputs/demo/perturbed-comparison.md`
+- `outputs/invalid/evidence.md`
+
+**Open issues:**
+
+- Apt layer digests still drift across rebuilds. The evidence field `reference_digest_match` records whether this run used the reference digest.
+- Podman warns that `/` is not a shared mount. The demo run still wrote the table.
+
+**Next phase:** P05

@@ -4,9 +4,10 @@ from decimal import Decimal
 from pathlib import Path
 
 from biorepro.cli import main
+from biorepro.demo import run_demo
 from biorepro.hashutil import sha256_file
 from biorepro.runner import run_fixture
-from tests.test_validate import VALID
+from tests.test_validate import INVALID, VALID
 
 SLEEP = """#!/usr/bin/env Rscript
 Sys.sleep(30)
@@ -99,6 +100,22 @@ def test_missing_output_is_not_a_numeric_disagreement(tmp_path):
     assert evidence.category == "missing_output"
     assert evidence.worker_created is True
     assert evidence.category != "numeric_disagreement"
+
+
+def test_demo_flow_traces_the_seeded_cell(tmp_path):
+    summary = run_demo(VALID, tmp_path / "demo", INVALID)
+    assert summary["status"] == "pass"
+    assert summary["clean_category"] == "match"
+    assert summary["perturbed_category"] == "numeric_disagreement"
+    assert summary["invalid_category"] == "schema_mismatch"
+    assert summary["invalid_worker_created"] is False
+    demo_md = (tmp_path / "demo" / "demo.md").read_text(encoding="utf-8")
+    assert "walk_challenge" in demo_md
+    assert "inputs/groups.csv" in demo_md
+    assert summary["trace"]["input_sha256"]
+    clean = json.loads((tmp_path / "demo" / "clean" / "evidence.json").read_text(encoding="utf-8"))
+    statuses = {item["endpoint_id"]: item["status"] for item in clean["endpoints"]}
+    assert statuses == {"control": "match", "standing_break": "match", "walk_challenge": "match"}
 
 
 def test_memory_limit_is_not_a_numeric_disagreement(tmp_path):

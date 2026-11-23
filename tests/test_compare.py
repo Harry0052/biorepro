@@ -48,6 +48,9 @@ def test_seeded_quarter_step_is_named():
     assert len(result.differences) == 1
     cell = result.differences[0]
     assert (cell.endpoint_id, cell.column, cell.kind) == ("walk_challenge", "mean_steps", "numeric_disagreement")
+    assert result.endpoints == [
+        {"endpoint_id": "walk_challenge", "status": "numeric_disagreement", "columns": ["mean_steps"]}
+    ]
     assert "clinical" not in result.message.lower()
 
 

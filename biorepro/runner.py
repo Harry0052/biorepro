@@ -179,6 +179,9 @@ class Evidence:
     worker_exit_code: int | None = None
     worker_stderr: str | None = None
     reference_digest_match: bool | None = None
+    endpoints: list | None = None
+    recovery: str | None = None
+    oracle_role: str | None = None
 
     def to_dict(self) -> dict:
         return {
@@ -204,6 +207,9 @@ class Evidence:
             "worker_exit_code": self.worker_exit_code,
             "worker_stderr": self.worker_stderr,
             "reference_digest_match": self.reference_digest_match,
+            "endpoints": self.endpoints or [],
+            "recovery": self.recovery,
+            "oracle_role": self.oracle_role,
             "limitation": (
                 "A match is outcome agreement under the recorded tolerances and inputs. "
                 "It is not a clinical validation."
@@ -312,6 +318,8 @@ def run_fixture(
 
 
 def _finish(output_dir: Path, evidence: Evidence) -> Evidence:
+    if evidence.recovery is None:
+        evidence.recovery = recovery_for(evidence.category)
     output_dir.mkdir(parents=True, exist_ok=True)
     _write_evidence(output_dir, evidence)
     return evidence
@@ -366,6 +374,7 @@ def _after_worker(
         worker_stderr=stderr,
         worker_created=True,
         reference_digest_match=manifest.get("_reference_digest_match"),
+        oracle_role=oracle_role,
     )
     timeout_seconds = manifest["limits"]["timeout_seconds"]
     hit_deadline = result.elapsed_seconds >= max(0, timeout_seconds - 0.5)
@@ -510,6 +519,12 @@ def _recheck_hashes(fixture: Path, manifest: dict) -> None:
 
 
 def _from_validation(validation: ValidationReport, identity: dict) -> Evidence:
+    recovery = recovery_for(validation.category)
+    if validation.category == "schema_mismatch" and "groups.csv" in validation.message:
+        recovery = (
+            "inputs/groups.csv is missing a declared column. Add the column, "
+            "update the manifest SHA-256 only after review, and validate again. No worker is created."
+        )
     return Evidence(
         status="rejected",
         category=validation.category,
@@ -518,6 +533,7 @@ def _from_validation(validation: ValidationReport, identity: dict) -> Evidence:
         schema_ok=False,
         output_csv=None,
         differences=[],
+        recovery=recovery,
         worker_created=False,
         **identity,
     )
@@ -547,6 +563,8 @@ def _from_comparison(identity: dict, comparison: Comparison, *, output_csv: Path
         schema_ok=comparison.schema_ok,
         output_csv=str(output_csv),
         differences=[item.to_dict() for item in comparison.differences],
+        endpoints=comparison.endpoints,
+        recovery=recovery_for(comparison.category),
         **identity,
         **common,
     )
@@ -583,7 +601,19 @@ def render_markdown(payload: dict) -> str:
         "",
         payload["limitation"],
         "",
+        f"Oracle role: {payload.get('oracle_role')}",
+        f"Trace the input bytes with SHA-256 {payload['input_sha256']} in the fixture file inputs/groups.csv.",
+        "The hand calculation is ORACLE.md in the same fixture. Units are steps per person per day.",
+        "",
+        "## Endpoints",
+        "",
+        "| Endpoint | Status | Columns |",
+        "| --- | --- | --- |",
     ]
+    for item in payload.get("endpoints") or []:
+        columns = ", ".join(item.get("columns") or []) or "—"
+        lines.append(f"| {item['endpoint_id']} | {item['status']} | {columns} |")
+    lines.extend(["", "## Recovery", "", payload.get("recovery") or "Review the category and rerun after the fixture is valid.", ""])
     differences = payload["differences"]
     if differences:
         lines.extend(
@@ -601,6 +631,34 @@ def render_markdown(payload: dict) -> str:
         lines.append("No cell differences.")
         lines.append("")
     return "\n".join(lines)
+
+
+RECOVERY = {
+    "match": "No change is required. Keep the evidence packet with the fixture hashes.",
+    "numeric_disagreement": (
+        "Open the named endpoint and column in the selected oracle and in endpoints.csv. "
+        "The report records the difference and the tolerance. It does not assign a cause."
+    ),
+    "missing_value": "An empty cell is missing and is not a zero. Restore the missing number or correct the oracle, then compare again.",
+    "missing_endpoint": "Every declared endpoint_id has to appear once. Add the missing row or remove the extra row, then compare again.",
+    "schema_mismatch": "Make the table columns exactly endpoint_id, estimand, unit, n_people, n_groups, mean_steps, then validate again.",
+    "duplicate_key": "Keep one row per endpoint_id. Validate again after removing the duplicate.",
+    "review_rejected": "Restore the allowlisted bytes or review a manifest change. Validate must exit 0 before a worker is created.",
+    "hash_mismatch": "The file bytes differ from the manifest. Restore the reviewed file or review the new hash. No worker is created.",
+    "timeout": "The worker was stopped at timeout_seconds. Inspect the script for a stall before raising the limit.",
+    "resource_limit": "The worker hit its memory or output-size cap. Reduce the allocation or raise the declared limit, then rerun.",
+    "missing_output": "The entry point has to write /output/endpoints.csv. Fix the script and rerun.",
+    "isolation_blocked": "Build the worker with scripts/build_worker.sh. The base layer and Containerfile hash must match the manifest.",
+    "worker_failed": "Read worker_stderr in this packet. Fix the entry point and rerun. This is not a numeric disagreement.",
+    "malformed_input": "Fix the named field in the input table, then validate again.",
+    "oversized_input": "Shrink the input or raise limits.max_input_bytes or limits.max_rows, then validate again.",
+}
+
+
+def recovery_for(category: str | None) -> str:
+    if category is None:
+        return RECOVERY["match"]
+    return RECOVERY.get(category, "Review the category and rerun after validate exits 0.")
 
 
 def exit_code_for(evidence: Evidence) -> int:
