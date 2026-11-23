@@ -1,0 +1,7 @@
+group_id,arm,n_people,steps_sum
+g1,walk_challenge,12,78480
+g2,walk_challenge,8,52320
+g3,standing_break,10,60000
+g4,standing_break,10,62410
+g5,control,15,90000
+g6,control,5,29765

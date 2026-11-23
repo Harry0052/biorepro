@@ -1,0 +1,4 @@
+endpoint_id,estimand,unit,n_people,n_groups,mean_steps
+control,pooled_mean_daily_steps,steps_per_person_per_day,20,2,5988.25
+standing_break,pooled_mean_daily_steps,steps_per_person_per_day,20,2,6120.50
+walk_challenge,pooled_mean_daily_steps,steps_per_person_per_day,20,2,6540.00

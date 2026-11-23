@@ -1,0 +1,87 @@
+{
+  "manifest_version": 1,
+  "fixture_id": "invalid-missing-column",
+  "fixture_version": "1",
+  "description": "Labeled invalid fixture: inputs/groups.csv omits n_people.",
+  "doi": null,
+  "generation_seed": 20261123,
+  "rng_seed": null,
+  "estimand": {
+    "name": "pooled_mean_daily_steps",
+    "definition": "Within each arm, sum(steps_sum) / sum(n_people).",
+    "unit": "steps_per_person_per_day"
+  },
+  "inputs": [
+    {
+      "path": "inputs/groups.csv",
+      "sha256": "88a5ca7ab6e0f3c74a1f786db3caaf752bb55421902c6b54c5c1f8d87f96fb7c",
+      "role": "group_outcomes"
+    }
+  ],
+  "entrypoint": {
+    "path": "script/analyze.R",
+    "sha256": "c3a9753df51dea94e99064cada5b1c041134f724ebbbdcbf095939fe416686b8",
+    "interpreter": "Rscript",
+    "args": [
+      "--vanilla"
+    ]
+  },
+  "oracles": [
+    {
+      "path": "oracle/expected.csv",
+      "sha256": "e703cd02648c8a59d0d9bfb10e3f9cd641a768e9426389de5a3ce213b5560045",
+      "role": "clean"
+    },
+    {
+      "path": "oracle/perturbed.csv",
+      "sha256": "9f8ca02f7e9f153d3c960f80a21cd99709c83f06b5d1ba06882fff95bb691458",
+      "role": "perturbed"
+    }
+  ],
+  "notes": [],
+  "image": {
+    "name": "localhost/biorepro-office-wellness",
+    "digest": null,
+    "built_from": "deploy/Containerfile"
+  },
+  "output_schema": {
+    "columns": [
+      "endpoint_id",
+      "estimand",
+      "unit",
+      "n_people",
+      "n_groups",
+      "mean_steps"
+    ],
+    "primary_key": [
+      "endpoint_id"
+    ],
+    "column_units": {
+      "endpoint_id": null,
+      "estimand": null,
+      "unit": null,
+      "n_people": "people",
+      "n_groups": "groups",
+      "mean_steps": "steps_per_person_per_day"
+    }
+  },
+  "tolerances": {
+    "mean_steps": {
+      "abs": "0.01",
+      "rel": "0"
+    }
+  },
+  "limits": {
+    "max_input_bytes": 1048576,
+    "max_rows": 10000,
+    "max_output_bytes": 1048576,
+    "timeout_seconds": 30,
+    "memory_mb": 256
+  },
+  "isolation": {
+    "network": "none",
+    "run_as_root": false,
+    "read_only_inputs": true
+  },
+  "data_terms": "Original synthetic group totals released with this repository under the MIT license. No personal data and no upstream dataset."
+}

@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "biorepro"
+version = "0.1.0"
+description = "Local harness that reruns one synthetic aggregate statistical table and reports endpoint-cell agreement."
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest==9.2.0"]
+
+[project.scripts]
+biorepro = "biorepro.cli:main"
+
+[tool.setuptools]
+packages = ["biorepro"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

@@ -5,7 +5,7 @@
 | Phase | Status | Recorded |
 | --- | --- | --- |
 | P01 | PASS | 2026-11-23 |
-| P02 | pending | |
+| P02 | PASS | 2026-11-23 |
 | P03 | pending | |
 | P04 | pending | |
 | P05 | pending | |
@@ -46,3 +46,43 @@
 **Next phase:** P02
 
 **Decision:** proceed. The acceptance case is unmet by the inspected tools. The synthetic fixture and the local toolchain have a provenance path. Build the harness in this repository.
+
+## P02 — Create the repository and data contracts
+
+**Phase and status:** P02 PASS
+
+**Files changed:**
+
+- `README.md`
+- `pyproject.toml`
+- `requirements-dev.txt`
+- `.gitignore`
+- `biorepro/` (`cli.py`, `validate.py`, `tables.py`, `errors.py`, `hashutil.py`)
+- `fixtures/office-wellness/` (manifest, group totals, reviewed R script, clean oracle, perturbed oracle, hand calculation)
+- `fixtures/invalid-missing-column/`
+- `tests/test_validate.py`
+- `docs/grokbot-progress.md`
+
+**Commands and results:**
+
+- `python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"` installed the package with pytest 9.2.0.
+- `.venv/bin/pytest -q` → `14 passed`.
+- `.venv/bin/biorepro validate fixtures/office-wellness` → exit 0, status `valid`, message `fixture office-wellness accepted`.
+- `.venv/bin/biorepro validate fixtures/invalid-missing-column` → exit 4, category `schema_mismatch`, message `groups.csv schema: missing n_people`.
+- A direct `Rscript --vanilla` smoke of `script/analyze.R` wrote means `5988.25`, `6120.50`, and `6540.00`, matching `ORACLE.md`. That smoke is not the isolated worker; P03 adds the worker.
+
+**Artifact paths:**
+
+- `fixtures/office-wellness/manifest.json`
+- `fixtures/office-wellness/oracle/expected.csv`
+- `fixtures/office-wellness/oracle/perturbed.csv`
+- `fixtures/office-wellness/ORACLE.md`
+- `fixtures/invalid-missing-column/manifest.json`
+
+**Open issues:**
+
+- `image.digest` is null. `validate` accepts the fixture and records the digest as unpinned. `run` must reject an unpinned digest before creating a worker.
+- Podman warned that `/` is not a shared mount. P03 has to show a real isolated run or record the block.
+- `fuse-overlayfs` is unpacked and not configured. Podman is using the native overlay driver.
+
+**Next phase:** P03
