@@ -1,0 +1,4 @@
+endpoint_id,estimand,unit,mean_value,n_groups
+walk_challenge,mean_daily_steps,steps,6540.00,12
+standing_break,mean_daily_steps,steps,6120.50,12
+control,mean_daily_steps,steps,5988.25,12
