@@ -1,0 +1,97 @@
+{
+  "manifest_version": 1,
+  "fixture_id": "office-wellness",
+  "fixture_version": "1",
+  "description": "Synthetic workplace step-program means. Three arms, six groups, hand-calculated pooled means.",
+  "doi": null,
+  "generation_seed": 20261123,
+  "rng_seed": null,
+  "estimand": {
+    "name": "pooled_mean_daily_steps",
+    "definition": "Within each arm, sum(steps_sum) / sum(n_people).",
+    "unit": "steps_per_person_per_day"
+  },
+  "inputs": [
+    {
+      "path": "inputs/groups.csv",
+      "sha256": "db38d705dacc0a1bfab739abab7ab9e46517a78cdb23f3edfff63c48190df6a6",
+      "role": "group_outcomes"
+    }
+  ],
+  "entrypoint": {
+    "path": "script/analyze.R",
+    "sha256": "693986d5ea4baa07b15b4fd9e74e587a2391e17656a971131c959dd9ab8a3b91",
+    "interpreter": "Rscript",
+    "args": [
+      "--vanilla"
+    ]
+  },
+  "oracles": [
+    {
+      "path": "oracle/expected.csv",
+      "sha256": "2da556063447ea1027c41b83557a6d0d6edd09aa2890c18483a2ede176f26c7a",
+      "role": "clean"
+    },
+    {
+      "path": "oracle/perturbed.csv",
+      "sha256": "6320d72952d7c624498f20e5e2ad85fa09cd93ac981687472d1e2247f241d9a0",
+      "role": "perturbed"
+    }
+  ],
+  "notes": [
+    {
+      "path": "ORACLE.md",
+      "sha256": "2a4290adc8b72b7b628d708edaeb2866b21ab9772655397c77b26f4fd92eea4f",
+      "role": "calculation_note"
+    }
+  ],
+  "image": {
+    "name": "localhost/biorepro-office-wellness:0.1.0",
+    "digest": "sha256:b2b0f3e7747a54ad426f7041c81decc7d82fe217ca335c19cf1def853f74cbd2",
+    "base_digest": "sha256:9c7f200c07e3d4a03e7249d2c16bf66a51120fb876aa2242cf31451412543289",
+    "base_layer": "sha256:369ede38a92da8cd72a76f15f37e496def401830f3c8b7d39c0c7695682a51ce",
+    "containerfile_sha256": "652fdef7c4c1b2c016faf1fbead31b26319be5d054ea13a38f7aaddd117cd5a2",
+    "built_from": "deploy/Containerfile",
+    "r_version": "4.3.3"
+  },
+  "output_schema": {
+    "columns": [
+      "endpoint_id",
+      "estimand",
+      "unit",
+      "n_people",
+      "n_groups",
+      "mean_steps"
+    ],
+    "primary_key": [
+      "endpoint_id"
+    ],
+    "column_units": {
+      "endpoint_id": null,
+      "estimand": null,
+      "unit": null,
+      "n_people": "people",
+      "n_groups": "groups",
+      "mean_steps": "steps_per_person_per_day"
+    }
+  },
+  "tolerances": {
+    "mean_steps": {
+      "abs": "0.01",
+      "rel": "0"
+    }
+  },
+  "limits": {
+    "max_input_bytes": 1048576,
+    "max_rows": 10000,
+    "max_output_bytes": 1048576,
+    "timeout_seconds": 30,
+    "memory_mb": 256
+  },
+  "isolation": {
+    "network": "none",
+    "run_as_root": false,
+    "read_only_inputs": true
+  },
+  "data_terms": "Original synthetic group totals released with this repository under the MIT license. No personal data and no upstream dataset."
+}
