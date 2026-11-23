@@ -10,7 +10,7 @@
 | P04 | PASS | 2026-11-23 |
 | P05 | PASS | 2026-11-23 |
 | P06 | PASS | 2026-11-23 |
-| P07 | pending | |
+| P07 | PASS | 2026-11-23 |
 
 ## P01 — Research overlap and confirm the MVP
 
@@ -223,3 +223,36 @@
 - Apt layer digests differ across rebuilds. The clean-room demo ran on a non-reference digest whose recipe labels matched.
 
 **Next phase:** P07
+
+## P07 — Publish and verify on GitHub
+
+**Phase and status:** P07 PASS
+
+**Files changed:**
+
+- `docs/grokbot-progress.md` (this record). The release tag points at the parent commit, which is the revision CI and the archive demo already tested.
+
+**Commands and results:**
+
+- Destination checked: `Harry0052/biorepro`, public, license SPDX `MIT`. Remote is `origin` for that repository. History on `main` was not rewritten. The branch was not merged.
+- Pull request: https://github.com/Harry0052/biorepro/pull/1
+- CI on commit `65ec47ed4c8a6e0b69bd551e3585859488dd09f6`:
+  - Push run https://github.com/Harry0052/biorepro/actions/runs/45115749411 — `demo` passed in 1m45s (install, pytest, fixture demo, artifact upload).
+  - Pull request run https://github.com/Harry0052/biorepro/actions/runs/45115935141 — `demo` passed in 1m30s.
+  - Annotation only: the pinned actions still target Node.js 20 and GitHub forced Node.js 24. The jobs succeeded.
+- Tag `v0.1.0` points at `65ec47ed4c8a6e0b69bd551e3585859488dd09f6` and was pushed. There is no separate release binary; the CI artifact is the demo evidence packet.
+- `git archive v0.1.0` into `/tmp/biorepro-tag`, then the README sequence: venv, editable install, `scripts/build_worker.sh`, pytest, `biorepro demo --output outputs/demo`. pytest → `37 passed`. Demo status `pass`. The rebuilt image digest differed from the reference digest and the recipe labels matched, which is the documented rebuild rule.
+
+**Artifact paths:**
+
+- https://github.com/Harry0052/biorepro/releases/tag/v0.1.0 (annotated tag; no extra binary)
+- `/tmp/biorepro-tag/outputs/demo/demo.json`
+- CI artifact `demo-evidence` on the runs above
+
+**Open issues:**
+
+- `main` is unchanged until the owner merges pull request 1.
+- Apt layer digests still differ across rebuilds. Recipe labels are the acceptance check in that case.
+- Actions Node.js 20 deprecation is a warning, not a failed check.
+
+**Next phase:** none. This is the last phase in the playbook.
